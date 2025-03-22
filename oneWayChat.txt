@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Message UI</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        .user-data {
+            margin: 20px 0;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background: #f9f9f9;
+        }
+
+        .message {
+            margin: 5px 0;
+            padding: 5px;
+            border: 1px solid #007bff;
+            border-radius: 3px;
+            background: #e7f1ff;
+        }
+
+        textarea {
+            width: 100%;
+            height: 60px;
+            margin-bottom: 10px;
+            padding: 5px;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Select User</h1>
+        <select id="userSelect">
+            <option value="">Select a user</option>
+            <option value="deep">deep</option>
+            <option value="sarthak">sarthak</option>
+            <option value="chomu">chomu</option>
+        </select>
+
+        <div id="userData" class="user-data"></div>
+
+        <textarea id="messageInput" placeholder="Type your message here..."></textarea>
+        <button id="sendMessage">Send Message</button>
+    </div>
+
+    <script>
+        document.getElementById('userSelect').addEventListener('change', function() {
+            const selectedUser = this.value;
+            if (selectedUser) {
+                fetchUserData(selectedUser);
+            }
+        });
+
+        async function fetchUserData(user) {
+            try {
+                const response = await fetch(`https://script.google.com/macros/s/AKfycbzoO1PE9ueI8sdXIqcb5abPZhs2d967AQjmdobHy79PLXPcTEvVNU03vO2DTzoicvTj/exec?mode=fetch&user=${user}`);
+                const data = await response.json();
+                displayUserData(data);
+            } catch (error) {
+                console.error('Error fetching user data:', error);
+                document.getElementById('userData').innerHTML = '<p>Error loading messages.</p>';
+            }
+        }
+
+        function displayUserData(data) {
+            const userDataDiv = document.getElementById('userData');
+            userDataDiv.innerHTML = ''; // Clear previous data
+
+            if (data.error) {
+                userDataDiv.innerHTML = `<p style="color:red;"><strong>Error:</strong> ${data.error}</p>`;
+                return;
+            }
+
+            // Display user name
+            userDataDiv.innerHTML += `<p><strong>User:</strong> ${data.user}</p>`;
+
+            // Display messages
+            if (data.messages && data.messages.length > 0) {
+                userDataDiv.innerHTML += '<p><strong>Messages:</strong></p>';
+                data.messages.forEach(message => {
+                    userDataDiv.innerHTML += `<div class="message">${message}</div>`;
+                });
+            } else {
+                userDataDiv.innerHTML += '<p>No messages available.</p>';
+            }
+        }
+
+        document.getElementById('sendMessage').addEventListener('click', function() {
+            const message = document.getElementById('messageInput').value.trim();
+            const user = document.getElementById('userSelect').value;
+
+            if (!user) {
+                alert("Please select a user first.");
+                return;
+            }
+            if (!message) {
+                alert("Message cannot be empty.");
+                return;
+            }
+
+            sendMessage(user, message);
+        });
+
+        async function sendMessage(user, message) {
+            try {
+                const response = await fetch(`https://script.google.com/macros/s/AKfycbzoO1PE9ueI8sdXIqcb5abPZhs2d967AQjmdobHy79PLXPcTEvVNU03vO2DTzoicvTj/exec?mode=push&user=${user}&message=${encodeURIComponent(message)}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('messageInput').value = ""; // Clear input box
+                    fetchUserData(user); // Refresh chat
+                } else {
+                    alert("Failed to send message: " + data.error);
+                }
+            } catch (error) {
+                console.error('Error sending message:', error);
+                alert("Error sending message.");
+            }
+        }
+    </script>
+</body>
+</html>
